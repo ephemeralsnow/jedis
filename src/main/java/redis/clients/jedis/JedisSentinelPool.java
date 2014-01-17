@@ -110,6 +110,8 @@ public class JedisSentinelPool extends Pool<Jedis> {
 
 	HostAndPort master = null;
 	boolean running = true;
+	int retry = 0;
+	final int maxTry = sentinels.size() * 10;
 
 	outer: while (running) {
 
@@ -133,8 +135,12 @@ public class JedisSentinelPool extends Pool<Jedis> {
 			break outer;
 		    }
 		} catch (JedisConnectionException e) {
-		    log.warning("Cannot connect to sentinel running @ " + hap
-			    + ". Trying next one.");
+			if (retry++ < maxTry) {
+				log.warning("Cannot connect to sentinel running @ " + hap
+					+ ". Trying next one.");
+			} else {
+				throw e;
+			}
 		}
 	    }
 
